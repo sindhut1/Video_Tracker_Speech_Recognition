@@ -1,3 +1,5 @@
+#UPDATED 5/11/2026
+
 #Get-Process vrmonitor | select starttime
 #PROGRAM ARGUMENTS: video_name student_name student_id
 #param($name)
@@ -69,49 +71,7 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     #Record time of completion
     $Completion_Date = Get-Date -UFormat "%m/%d/%Y %R"
 
-    #If the user has watched the full video, log it to the csv file
-    #$Csv = Import-Csv "..\powershell_test_output.csv"
-    #$Student_Exists = $false
-    #Write-Output $row.'STUDENT NAME'
-    #Write-Output $Student_Name
-    #$File_Name = $Files[$($Video-1)] -replace '\..*'
-    #$File_Name = $Files[$($Video-1)].Substring(0, $($Files[$($Video-1)].Length) - 4)
-    #$File_Name = $Files[$name].Substring(0, $($Files[$name].Length) - 4)
-    #$File_Name = $name.Substring(0, $name.Length-4)
-    #Write-Output $File_Name
-
-    #If student already exists in the file, log the video they watched as '1' for completed
-    #foreach($row in $Csv) {
-    #    if ($row.'STUDENT ID' -eq $ID) {
-    #        $Student_Exists = $true
-    #        $row.$($File_Name) = 1
-    #        #Write-Output $row
-    #    }
-    #}
-    #If the student does not exist yet, add their entry into the CSV file
-    #if (!$Student_Exists) {
-    #    $New_Row = $Csv[1]
-    #    #Create a clone of the header row and set each column to a value of '0'
-    #    foreach ($col in $Csv[1].PSObject.Properties) {
-    #        #Add-Content C:\Users\svfr_\OneDrive\Documents\powershell_test_output.csv "$Student_Name, $ID"
-    #        $New_Row.$($col.Name) = 0
-    #    }
-    #    $New_Row.'STUDENT NAME' = $Student_Name
-    #    $New_Row.'STUDENT ID' = $ID
-    #    $New_Row.$($File_Name) = 1
-    #    #Write-Output $New_Row
-    #    $New_Row | Export-csv -path "..\powershell_test_output.csv" -Append
-    #}
-    #Else {
-    #    $Csv | Export-csv -Path "..\powershell_test_output.csv" -NoTypeInformation
-    #}
-    
-    #$EncryptionKeyData = Get-Content "C:\Users\svfr_\OneDrive\Documents\360 Videos\360 Videos Tracking Program\Encryption.key"
-    #ALL THE ENCRYPTION STUFF
-    #$EncryptionKeyData = Get-Content "..\Encryption.key"
-    #$Password = ConvertTo-SecureString $ID -AsPlainText -Force
-    #THE ENCRYPTED ID
-    #$EP = ConvertFrom-SecureString $Password -Key $EncryptionKeyData
+    #Record the completion status code (2 for speech and video, 1 for just video, 0 for neither)
     if ($Transcription_Result) {
         if ($Transcription_Result[-1] -ge 0.5) {
             $completion_status_code = 2
@@ -123,6 +83,68 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     else {
         $completion_status_code = 1
     }
+
+    #LOCAL STORAGE START ----------------------
+    $Csv_Path = Join-Path $root "powershell_test_output.csv"
+
+    #Check if CSV file exists, if not create it and add the video names as headers
+    if (-not (Test-Path $Csv_Path)) {
+        $videoFiles = Get-ChildItem -Path '..\..\..\360 Videos' -Name
+
+        $headers = @(
+            'STUDENT NAME'
+            'STUDENT ID'
+        ) + ($videoFiles | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
+
+        $headers -join ',' | Out-File -FilePath $Csv_Path -Encoding utf8
+    }
+
+    #If the user has watched the full video, log it to the csv file
+    $Csv = Import-Csv $Csv_Path
+    $Student_Exists = $false
+    #Write-Output $row.'STUDENT NAME'
+    #Write-Output $Student_Name
+    $File_Name = $Files[$($Video-1)] -replace '\..*'
+    $File_Name = $Files[$($Video-1)].Substring(0, $($Files[$($Video-1)].Length) - 4)
+    $File_Name = $Files[$name].Substring(0, $($Files[$name].Length) - 4)
+    $File_Name = $name.Substring(0, $name.Length-4)
+    #Write-Output $File_Name
+
+    #If student already exists in the file, log the video they watched as '1' for completed
+    foreach($row in $Csv) {
+       if ($row.'STUDENT ID' -eq $ID) {
+           $Student_Exists = $true
+           $row.$($File_Name) = $completion_status_code
+           #Write-Output $row
+       }
+    }
+    #If the student does not exist yet, add their entry into the CSV file
+    if (!$Student_Exists) {
+       $New_Row = $Csv[1]
+       #Create a clone of the header row and set each column to a value of '0'
+       foreach ($col in $Csv[1].PSObject.Properties) {
+           #Add-Content C:\Users\svfr_\OneDrive\Documents\powershell_test_output.csv "$Student_Name, $ID"
+           $New_Row.$($col.Name) = 0
+       }
+       $New_Row.'STUDENT NAME' = $Student_Name
+       $New_Row.'STUDENT ID' = $ID
+       $New_Row.$($File_Name) = $completion_status_code
+       #Write-Output $New_Row
+       $New_Row | Export-csv -path $Csv_Path -Append
+    }
+    Else {
+       $Csv | Export-csv -Path $Csv_Path -NoTypeInformation
+    }
+    
+    #LOCAL STORAGE END ------------------
+
+    #$EncryptionKeyData = Get-Content "C:\Users\svfr_\OneDrive\Documents\360 Videos\360 Videos Tracking Program\Encryption.key"
+    #ALL THE ENCRYPTION STUFF
+    #$EncryptionKeyData = Get-Content "..\Encryption.key"
+    #$Password = ConvertTo-SecureString $ID -AsPlainText -Force
+    #THE ENCRYPTED ID
+    #$EP = ConvertFrom-SecureString $Password -Key $EncryptionKeyData
+    
 
     $score = [double]$Transcription_Result[-1]
     $grade = ($score * 100).ToString() + "%"
