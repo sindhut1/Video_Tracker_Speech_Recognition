@@ -119,7 +119,7 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
        }
     }
     #If the student does not exist yet, add their entry into the CSV file
-    if (!$Student_Exists) {
+    if (-not $Student_Exists) {
     #    $New_Row = $Csv[1]
     #    #Create a clone of the header row and set each column to a value of '0'
     #    foreach ($col in $Csv[1].PSObject.Properties) {
@@ -132,21 +132,21 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     #    #Write-Output $New_Row
     #    $New_Row | Export-csv -path $Csv_Path -Append
     
-    # Get header names from the first row (if it exists) or parse the header line
-        $propNames = @()
-        if ($Csv.Count -gt 0) {
-            $propNames = $Csv[0].PSObject.Properties | ForEach-Object { $_.Name }
+    #   Read header names from the file (robust even when rows exist)
+        $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
+        if ($headerLine) {
+            $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() }
         }
         else {
-            $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
-            if ($headerLine) { $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() } }
+            $propNames = @(
+                'STUDENT NAME'
+                'STUDENT ID'
+            ) + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
         }
 
         # Build new row: initialize all columns to 0
         $new = [ordered]@{}
-        foreach ($prop in $propNames) {
-            $new[$prop] = 0
-        }
+        foreach ($prop in $propNames) { $new[$prop] = 0 }
 
         # Set student info and current video
         $new['STUDENT NAME'] = $Student_Name
@@ -155,9 +155,9 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
 
         # Convert to PSObject and append
         $newObj = New-Object PSObject -Property $new
-        $newObj | Export-Csv -Path $Csv_Path -NoTypeInformation -Append
+        $newObj | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
     }
-    Else {
+    else {
        $Csv | Export-csv -Path $Csv_Path -NoTypeInformation
     }
     
