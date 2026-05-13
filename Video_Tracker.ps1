@@ -120,17 +120,42 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     }
     #If the student does not exist yet, add their entry into the CSV file
     if (!$Student_Exists) {
-       $New_Row = $Csv[1]
-       #Create a clone of the header row and set each column to a value of '0'
-       foreach ($col in $Csv[1].PSObject.Properties) {
-           #Add-Content C:\Users\svfr_\OneDrive\Documents\powershell_test_output.csv "$Student_Name, $ID"
-           $New_Row.$($col.Name) = 0
-       }
-       $New_Row.'STUDENT NAME' = $Student_Name
-       $New_Row.'STUDENT ID' = $ID
-       $New_Row.$($File_Name) = $completion_status_code
-       #Write-Output $New_Row
-       $New_Row | Export-csv -path $Csv_Path -Append
+    #    $New_Row = $Csv[1]
+    #    #Create a clone of the header row and set each column to a value of '0'
+    #    foreach ($col in $Csv[1].PSObject.Properties) {
+    #        #Add-Content C:\Users\svfr_\OneDrive\Documents\powershell_test_output.csv "$Student_Name, $ID"
+    #        $New_Row.$($col.Name) = 0
+    #    }
+    #    $New_Row.'STUDENT NAME' = $Student_Name
+    #    $New_Row.'STUDENT ID' = $ID
+    #    $New_Row.$($File_Name) = $completion_status_code
+    #    #Write-Output $New_Row
+    #    $New_Row | Export-csv -path $Csv_Path -Append
+    
+    # Get header names from the first row (if it exists) or parse the header line
+        $propNames = @()
+        if ($Csv.Count -gt 0) {
+            $propNames = $Csv[0].PSObject.Properties | ForEach-Object { $_.Name }
+        }
+        else {
+            $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
+            if ($headerLine) { $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() } }
+        }
+
+        # Build new row: initialize all columns to 0
+        $new = [ordered]@{}
+        foreach ($prop in $propNames) {
+            $new[$prop] = 0
+        }
+
+        # Set student info and current video
+        $new['STUDENT NAME'] = $Student_Name
+        $new['STUDENT ID']   = $ID
+        $new[$File_Name]     = $completion_status_code
+
+        # Convert to PSObject and append
+        $newObj = New-Object PSObject -Property $new
+        $newObj | Export-Csv -Path $Csv_Path -NoTypeInformation -Append
     }
     Else {
        $Csv | Export-csv -Path $Csv_Path -NoTypeInformation
