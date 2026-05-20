@@ -100,7 +100,7 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     }
 
     #If the user has watched the full video, log it to the csv file
-    $Csv = Import-Csv $Csv_Path
+    $Csv = @(Import-Csv $Csv_Path)
     $Student_Exists = $false
     #Write-Output $row.'STUDENT NAME'
     #Write-Output $Student_Name
@@ -109,57 +109,82 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     $File_Name = $Files[$name].Substring(0, $($Files[$name].Length) - 4)
     $File_Name = $name.Substring(0, $name.Length-4)
     #Write-Output $File_Name
+    $existingRow = $Csv | Where-Object { $_.'STUDENT ID'.ToString().Trim() -eq $ID.ToString().Trim() } | Select-Object -First 1
 
     #If student already exists in the file, log the video they watched as '1' for completed
-    foreach($row in $Csv) {
-       if ($row.'STUDENT ID' -eq $ID) {
-           $Student_Exists = $true
-           $row.$($File_Name) = $completion_status_code
-           #Write-Output $row
-       }
-    }
-    #If the student does not exist yet, add their entry into the CSV file
-    if (-not $Student_Exists) {
-    #    $New_Row = $Csv[1]
-    #    #Create a clone of the header row and set each column to a value of '0'
-    #    foreach ($col in $Csv[1].PSObject.Properties) {
-    #        #Add-Content C:\Users\svfr_\OneDrive\Documents\powershell_test_output.csv "$Student_Name, $ID"
-    #        $New_Row.$($col.Name) = 0
+    # foreach($row in $Csv) {
+    #    if ($row.'STUDENT ID' -eq $ID) {
+    #        $Student_Exists = $true
+    #        $row.$($File_Name) = $completion_status_code
+    #        #Write-Output $row
     #    }
-    #    $New_Row.'STUDENT NAME' = $Student_Name
-    #    $New_Row.'STUDENT ID' = $ID
-    #    $New_Row.$($File_Name) = $completion_status_code
-    #    #Write-Output $New_Row
-    #    $New_Row | Export-csv -path $Csv_Path -Append
-    
-    #   Read header names from the file (robust even when rows exist)
+    # }
+
+    if ($existingRow) {
+        $existingRow.$File_Name = $completion_status_code
+        $Csv | Export-Csv -Path $Csv_Path -NoTypeInformation -Encoding UTF8
+    }
+
+    else {
         $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
         if ($headerLine) {
             $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() }
         }
         else {
-            $propNames = @(
-                'STUDENT NAME'
-                'STUDENT ID'
-            ) + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
+            $propNames = @('STUDENT NAME', 'STUDENT ID') + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
         }
 
-        # Build new row: initialize all columns to 0
         $new = [ordered]@{}
         foreach ($prop in $propNames) { $new[$prop] = 0 }
 
-        # Set student info and current video
         $new['STUDENT NAME'] = $Student_Name
-        $new['STUDENT ID']   = $ID
-        $new[$File_Name]     = $completion_status_code
+        $new['STUDENT ID'] = $ID
+        $new[$File_Name] = $completion_status_code
 
-        # Convert to PSObject and append
-        $newObj = New-Object PSObject -Property $new
-        $newObj | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
+        [pscustomobject]$new | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
     }
-    else {
-       $Csv | Export-csv -Path $Csv_Path -NoTypeInformation
-    }
+    #If the student does not exist yet, add their entry into the CSV file
+    # if (-not $Student_Exists) {
+            #    $New_Row = $Csv[1]
+            #    #Create a clone of the header row and set each column to a value of '0'
+            #    foreach ($col in $Csv[1].PSObject.Properties) {
+            #        #Add-Content C:\Users\svfr_\OneDrive\Documents\powershell_test_output.csv "$Student_Name, $ID"
+            #        $New_Row.$($col.Name) = 0
+            #    }
+            #    $New_Row.'STUDENT NAME' = $Student_Name
+            #    $New_Row.'STUDENT ID' = $ID
+            #    $New_Row.$($File_Name) = $completion_status_code
+            #    #Write-Output $New_Row
+            #    $New_Row | Export-csv -path $Csv_Path -Append
+    
+    #   Read header names from the file (robust even when rows exist)
+    #     $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
+    #     if ($headerLine) {
+    #         $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() }
+    #     }
+    #     else {
+    #         $propNames = @(
+    #             'STUDENT NAME'
+    #             'STUDENT ID'
+    #         ) + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
+    #     }
+
+    #     # Build new row: initialize all columns to 0
+    #     $new = [ordered]@{}
+    #     foreach ($prop in $propNames) { $new[$prop] = 0 }
+
+    #     # Set student info and current video
+    #     $new['STUDENT NAME'] = $Student_Name
+    #     $new['STUDENT ID']   = $ID
+    #     $new[$File_Name]     = $completion_status_code
+
+    #     # Convert to PSObject and append
+    #     $newObj = New-Object PSObject -Property $new
+    #     $newObj | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
+    # }
+    # else {
+    #    $Csv | Export-csv -Path $Csv_Path -NoTypeInformation
+    # }
     
     #LOCAL STORAGE END ------------------
 
