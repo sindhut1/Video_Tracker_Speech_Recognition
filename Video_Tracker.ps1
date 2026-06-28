@@ -85,64 +85,64 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     }
 
     #LOCAL STORAGE START ----------------------
-    $Csv_Path = Join-Path $root "powershell_test_output.csv"
+    # $Csv_Path = Join-Path $root "powershell_test_output.csv"
 
-    #Check if CSV file exists, if not create it and add the video names as headers
-    if (-not (Test-Path $Csv_Path)) {
-        $videoFiles = Get-ChildItem -Path '..\..\..\360 Videos' -Name
+    # #Check if CSV file exists, if not create it and add the video names as headers
+    # if (-not (Test-Path $Csv_Path)) {
+    #     $videoFiles = Get-ChildItem -Path '..\..\..\360 Videos' -Name
 
-        $headers = @(
-            'STUDENT NAME'
-            'STUDENT ID'
-        ) + ($videoFiles | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
+    #     $headers = @(
+    #         'STUDENT NAME'
+    #         'STUDENT ID'
+    #     ) + ($videoFiles | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
 
-        $headers -join ',' | Out-File -FilePath $Csv_Path -Encoding utf8
-    }
-
-    #If the user has watched the full video, log it to the csv file
-    $Csv = @(Import-Csv $Csv_Path)
-    $Student_Exists = $false
-    #Write-Output $row.'STUDENT NAME'
-    #Write-Output $Student_Name
-    $File_Name = $Files[$($Video-1)] -replace '\..*'
-    $File_Name = $Files[$($Video-1)].Substring(0, $($Files[$($Video-1)].Length) - 4)
-    $File_Name = $Files[$name].Substring(0, $($Files[$name].Length) - 4)
-    $File_Name = $name.Substring(0, $name.Length-4)
-    #Write-Output $File_Name
-    $existingRow = $Csv | Where-Object { $_.'STUDENT ID'.ToString().Trim() -eq $ID.ToString().Trim() } | Select-Object -First 1
-
-    #If student already exists in the file, log the video they watched as '1' for completed
-    # foreach($row in $Csv) {
-    #    if ($row.'STUDENT ID' -eq $ID) {
-    #        $Student_Exists = $true
-    #        $row.$($File_Name) = $completion_status_code
-    #        #Write-Output $row
-    #    }
+    #     $headers -join ',' | Out-File -FilePath $Csv_Path -Encoding utf8
     # }
 
-    if ($existingRow) {
-        $existingRow.$File_Name = $completion_status_code
-        $Csv | Export-Csv -Path $Csv_Path -NoTypeInformation -Encoding UTF8
-    }
+    # #If the user has watched the full video, log it to the csv file
+    # $Csv = @(Import-Csv $Csv_Path)
+    # $Student_Exists = $false
+    # #Write-Output $row.'STUDENT NAME'
+    # #Write-Output $Student_Name
+    # $File_Name = $Files[$($Video-1)] -replace '\..*'
+    # $File_Name = $Files[$($Video-1)].Substring(0, $($Files[$($Video-1)].Length) - 4)
+    # $File_Name = $Files[$name].Substring(0, $($Files[$name].Length) - 4)
+    # $File_Name = $name.Substring(0, $name.Length-4)
+    # #Write-Output $File_Name
+    # $existingRow = $Csv | Where-Object { $_.'STUDENT ID'.ToString().Trim() -eq $ID.ToString().Trim() } | Select-Object -First 1
 
-    else {
-        $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
-        if ($headerLine) {
-            $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() }
-        }
-        else {
-            $propNames = @('STUDENT NAME', 'STUDENT ID') + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
-        }
+    # #If student already exists in the file, log the video they watched as '1' for completed
+    # # foreach($row in $Csv) {
+    # #    if ($row.'STUDENT ID' -eq $ID) {
+    # #        $Student_Exists = $true
+    # #        $row.$($File_Name) = $completion_status_code
+    # #        #Write-Output $row
+    # #    }
+    # # }
 
-        $new = [ordered]@{}
-        foreach ($prop in $propNames) { $new[$prop] = 0 }
+    # if ($existingRow) {
+    #     $existingRow.$File_Name = $completion_status_code
+    #     $Csv | Export-Csv -Path $Csv_Path -NoTypeInformation -Encoding UTF8
+    # }
 
-        $new['STUDENT NAME'] = $Student_Name
-        $new['STUDENT ID'] = $ID
-        $new[$File_Name] = $completion_status_code
+    # else {
+    #     $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
+    #     if ($headerLine) {
+    #         $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() }
+    #     }
+    #     else {
+    #         $propNames = @('STUDENT NAME', 'STUDENT ID') + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
+    #     }
 
-        [pscustomobject]$new | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
-    }
+    #     $new = [ordered]@{}
+    #     foreach ($prop in $propNames) { $new[$prop] = 0 }
+
+    #     $new['STUDENT NAME'] = $Student_Name
+    #     $new['STUDENT ID'] = $ID
+    #     $new[$File_Name] = $completion_status_code
+
+    #     [pscustomobject]$new | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
+    # }
     #If the student does not exist yet, add their entry into the CSV file
     # if (-not $Student_Exists) {
             #    $New_Row = $Csv[1]
@@ -194,12 +194,15 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     #$Password = ConvertTo-SecureString $ID -AsPlainText -Force
     #THE ENCRYPTED ID
     #$EP = ConvertFrom-SecureString $Password -Key $EncryptionKeyData
-    
 
     $score = [double]$Transcription_Result[-1]
     $grade = ($score * 100).ToString() + "%"
     $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
     $headers.Add("Content-Type", "application/json")
+
+    #SAVE TO LOCAL STORAGE USING NEW PYTHON SCRIPT
+    $save_script_path = Join-Path $root "Save_To_CSV.py"
+    & $venv $save_script_path $ID $video_num $grade $completion_status_code $Completion_Date
 
     $body = @"
     {
