@@ -202,7 +202,7 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
 
     #SAVE TO LOCAL STORAGE USING NEW PYTHON SCRIPT
     $save_script_path = Join-Path $root "Save_To_CSV.py"
-    & $venv $save_script_path $ID $video_num $grade $completion_status_code $Completion_Date
+    & $venv $save_script_path $ID $video_num $completion_status_code $Completion_Date
 
     $body = @"
     {

@@ -3,7 +3,7 @@ import os
 import sys
 
 arguments = sys.argv[ 1: ]
-headers = [ "STUDENT ID", "VIDEO NUMBER", "SPEECH RECOGNITION SCORE", "COMPLETION STATUS", "DATE" ]
+headers = [ "STUDENT ID", "VIDEO NUMBER", "COMPLETION STATUS", "DATE" ]
 filename = "test_output.csv"
 #print(arguments)
 
