@@ -1,4 +1,4 @@
-#UPDATED 7/8/2026
+#UPDATED 9/4/2026
 
 #Get-Process vrmonitor | select starttime
 #PROGRAM ARGUMENTS: video_name student_name student_id
@@ -85,107 +85,6 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     }
 
     #LOCAL STORAGE START ----------------------
-    # $Csv_Path = Join-Path $root "powershell_test_output.csv"
-
-    # #Check if CSV file exists, if not create it and add the video names as headers
-    # if (-not (Test-Path $Csv_Path)) {
-    #     $videoFiles = Get-ChildItem -Path '..\..\..\360 Videos' -Name
-
-    #     $headers = @(
-    #         'STUDENT NAME'
-    #         'STUDENT ID'
-    #     ) + ($videoFiles | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
-
-    #     $headers -join ',' | Out-File -FilePath $Csv_Path -Encoding utf8
-    # }
-
-    # #If the user has watched the full video, log it to the csv file
-    # $Csv = @(Import-Csv $Csv_Path)
-    # $Student_Exists = $false
-    # #Write-Output $row.'STUDENT NAME'
-    # #Write-Output $Student_Name
-    # $File_Name = $Files[$($Video-1)] -replace '\..*'
-    # $File_Name = $Files[$($Video-1)].Substring(0, $($Files[$($Video-1)].Length) - 4)
-    # $File_Name = $Files[$name].Substring(0, $($Files[$name].Length) - 4)
-    # $File_Name = $name.Substring(0, $name.Length-4)
-    # #Write-Output $File_Name
-    # $existingRow = $Csv | Where-Object { $_.'STUDENT ID'.ToString().Trim() -eq $ID.ToString().Trim() } | Select-Object -First 1
-
-    # #If student already exists in the file, log the video they watched as '1' for completed
-    # # foreach($row in $Csv) {
-    # #    if ($row.'STUDENT ID' -eq $ID) {
-    # #        $Student_Exists = $true
-    # #        $row.$($File_Name) = $completion_status_code
-    # #        #Write-Output $row
-    # #    }
-    # # }
-
-    # if ($existingRow) {
-    #     $existingRow.$File_Name = $completion_status_code
-    #     $Csv | Export-Csv -Path $Csv_Path -NoTypeInformation -Encoding UTF8
-    # }
-
-    # else {
-    #     $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
-    #     if ($headerLine) {
-    #         $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() }
-    #     }
-    #     else {
-    #         $propNames = @('STUDENT NAME', 'STUDENT ID') + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
-    #     }
-
-    #     $new = [ordered]@{}
-    #     foreach ($prop in $propNames) { $new[$prop] = 0 }
-
-    #     $new['STUDENT NAME'] = $Student_Name
-    #     $new['STUDENT ID'] = $ID
-    #     $new[$File_Name] = $completion_status_code
-
-    #     [pscustomobject]$new | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
-    # }
-    #If the student does not exist yet, add their entry into the CSV file
-    # if (-not $Student_Exists) {
-            #    $New_Row = $Csv[1]
-            #    #Create a clone of the header row and set each column to a value of '0'
-            #    foreach ($col in $Csv[1].PSObject.Properties) {
-            #        #Add-Content C:\Users\svfr_\OneDrive\Documents\powershell_test_output.csv "$Student_Name, $ID"
-            #        $New_Row.$($col.Name) = 0
-            #    }
-            #    $New_Row.'STUDENT NAME' = $Student_Name
-            #    $New_Row.'STUDENT ID' = $ID
-            #    $New_Row.$($File_Name) = $completion_status_code
-            #    #Write-Output $New_Row
-            #    $New_Row | Export-csv -path $Csv_Path -Append
-    
-    #   Read header names from the file (robust even when rows exist)
-    #     $headerLine = Get-Content $Csv_Path -TotalCount 1 -ErrorAction SilentlyContinue
-    #     if ($headerLine) {
-    #         $propNames = $headerLine -split ',' | ForEach-Object { $_.Trim() }
-    #     }
-    #     else {
-    #         $propNames = @(
-    #             'STUDENT NAME'
-    #             'STUDENT ID'
-    #         ) + (Get-ChildItem -Path '..\..\..\360 Videos' -Name | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) })
-    #     }
-
-    #     # Build new row: initialize all columns to 0
-    #     $new = [ordered]@{}
-    #     foreach ($prop in $propNames) { $new[$prop] = 0 }
-
-    #     # Set student info and current video
-    #     $new['STUDENT NAME'] = $Student_Name
-    #     $new['STUDENT ID']   = $ID
-    #     $new[$File_Name]     = $completion_status_code
-
-    #     # Convert to PSObject and append
-    #     $newObj = New-Object PSObject -Property $new
-    #     $newObj | Export-Csv -Path $Csv_Path -NoTypeInformation -Append -Encoding UTF8
-    # }
-    # else {
-    #    $Csv | Export-csv -Path $Csv_Path -NoTypeInformation
-    # }
-    
     #LOCAL STORAGE END ------------------
 
     #$EncryptionKeyData = Get-Content "C:\Users\svfr_\OneDrive\Documents\360 Videos\360 Videos Tracking Program\Encryption.key"
@@ -195,51 +94,26 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
     #THE ENCRYPTED ID
     #$EP = ConvertFrom-SecureString $Password -Key $EncryptionKeyData
 
-    $score = [double]$Transcription_Result[-1]
-    $grade = ($score * 100).ToString() + "%"
+    #$score = [double]$Transcription_Result[-1]
+    #$grade = ($score * 100).ToString() + "%"
     $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
     $headers.Add("Content-Type", "application/json")
 
     #SAVE TO LOCAL STORAGE USING NEW PYTHON SCRIPT
-    $save_script_path = Join-Path $root "Save_To_CSV.py"
-    & $venv $save_script_path $ID $video_num $completion_status_code $Completion_Date
+    # $save_script_path = Join-Path $root "Save_To_CSV.py"
+    # & $venv $save_script_path $ID $video_num $completion_status_code $Completion_Date
 
     $body = @"
     {
-    `"id`": `"$ID`",
-    `"videoNumber`": `"$video_num`",
-    `"status`": `"$completion_status_code`",
-    `"date`": `"$Completion_Date`",
-    `"grade`": `"$grade`"
+    `"STUDENT ID`": `"$ID`",
+    `"VIDEO NUMBER`": `"$video_num`",
+    `"COMPLETION STATUS`": `"$completion_status_code`",
+    `"DATE`": `"$Completion_Date`"
     }
 "@
 
-    $response = Invoke-RestMethod 'http://150.136.241.0:5000/uploadVideoResults' -Method 'POST' -Headers $headers -Body $body
+    $response = Invoke-RestMethod 'http://3.23.113.24:8000/receive_video' -Method 'POST' -Headers $headers -Body $body
     $response | ConvertTo-Json
 }
 
-
-#Remove-Job $Video_Transcription
-
 #Read-Host -Prompt "Press Enter to exit"
-#Remove all variables at the end of the process
-#Remove-Variable Quit
-#Remove-Variable Student_Name
-#Remove-Variable ID
-#Remove-Variable i
-#Remove-Variable Video
-#Remove-Variable Valid_Selection
-#Remove-Variable Files
-#Remove-Variable File
-#Remove-Variable File_Path
-#Remove-Variable Shell
-#Remove-Variable Folder
-#Remove-Variable Shell_Folder
-#Remove-Variable Shell_File
-#Remove-Variable Video_Length
-#Remove-Variable Time_Watched
-#Remove-Variable Csv
-#Remove-Variable Student_Exists
-#Remove-Variable row
-#Remove-Variable File_Name
-#Remove-Variable New_Row
