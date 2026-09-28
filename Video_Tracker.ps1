@@ -1,4 +1,4 @@
-#UPDATED 9/4/2026
+#UPDATED 9/28/2026
 
 #Get-Process vrmonitor | select starttime
 #PROGRAM ARGUMENTS: video_name student_name student_id
@@ -27,7 +27,7 @@ foreach ($Vid in $Files) {
 }
 
 #COMMENT ---------------------
-#$Video_num = 1
+# $Video_num = 1
 
 #START THE VIDEO TRANSCRIPTION SCRIPT
 #THIS SHOULD RUN PARALLEL TO THE STEAMVR VIDEO AND RECORD THE DIALOGUE FROM THE USER
@@ -39,6 +39,34 @@ $Video_Transcription = Start-Job -ScriptBlock {
     & $jvenv $jScript_File_Path $jvid_name
 } -ArgumentList @($venv, $Script_File_Path, $name)
 
+
+function Send-VideoStatus {
+    param(
+        [int]$StatusCode
+    )
+
+    #$score = [double]$Transcription_Result[-1]
+    #$grade = ($score * 100).ToString() + "%"
+    $Completion_Date = Get-Date -UFormat "%m/%d/%Y %R"
+
+    $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+    $headers.Add("Content-Type", "application/json")
+
+    $body = @"
+        {
+        `"STUDENT ID`": `"$ID`",
+        `"VIDEO NUMBER`": `"$video_num`",
+        `"COMPLETION STATUS`": `"$StatusCode`",
+        `"DATE`": `"$Completion_Date`"
+        }
+"@
+
+    Invoke-RestMethod 'http://3.23.113.24:8000/receive_video' -Method 'POST' -Headers $headers -Body $body
+}
+
+# Log that the student attempted the video
+Send-VideoStatus -StatusCode 0
+
 #UNCOMMENT -----------------
 $Time_Watched = Measure-Command {
    Start-Process -FilePath $File_Path -Wait
@@ -46,7 +74,7 @@ $Time_Watched = Measure-Command {
 $Time_Watched = $Time_Watched.TotalMinutes
 
 #COMMENT ----------------
-#$Time_Watched = 25
+# $Time_Watched = 25
 
 $Transcription_Result = Receive-Job $Video_Transcription
 Stop-Job $Video_Transcription
@@ -64,7 +92,7 @@ $Shell_File = $Shell_Folder.ParseName($File)
 $Video_Length = [timespan]::Parse($Shell_Folder.GetDetailsOf($Shell_File, 27)).TotalMinutes
 
 #COMMENT -----------
-#$Video_Length = 25
+# $Video_Length = 25
 
 
 if ($Time_Watched -ge ($Video_Length * 0.9)) {
@@ -96,24 +124,27 @@ if ($Time_Watched -ge ($Video_Length * 0.9)) {
 
     #$score = [double]$Transcription_Result[-1]
     #$grade = ($score * 100).ToString() + "%"
-    $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
-    $headers.Add("Content-Type", "application/json")
+    # $headers = New-Object "System.Collections.Generic.Dictionary[[String],[String]]"
+    # $headers.Add("Content-Type", "application/json")
 
     #SAVE TO LOCAL STORAGE USING NEW PYTHON SCRIPT
     # $save_script_path = Join-Path $root "Save_To_CSV.py"
     # & $venv $save_script_path $ID $video_num $completion_status_code $Completion_Date
 
-    $body = @"
-    {
-    `"STUDENT ID`": `"$ID`",
-    `"VIDEO NUMBER`": `"$video_num`",
-    `"COMPLETION STATUS`": `"$completion_status_code`",
-    `"DATE`": `"$Completion_Date`"
-    }
-"@
+#     $body = @"
+#     {
+#     `"STUDENT ID`": `"$ID`",
+#     `"VIDEO NUMBER`": `"$video_num`",
+#     `"COMPLETION STATUS`": `"$completion_status_code`",
+#     `"DATE`": `"$Completion_Date`"
+#     }
+# "@
 
-    $response = Invoke-RestMethod 'http://3.23.113.24:8000/receive_video' -Method 'POST' -Headers $headers -Body $body
-    $response | ConvertTo-Json
+#     $response = Invoke-RestMethod 'http://3.23.113.24:8000/receive_video' -Method 'POST' -Headers $headers -Body $body
+#     $response | ConvertTo-Json
+
+# Log the student's completion status to the server
+Send-VideoStatus -StatusCode $completion_status_code
 }
 
 #Read-Host -Prompt "Press Enter to exit"
